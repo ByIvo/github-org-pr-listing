@@ -1,0 +1,28 @@
+{
+    "name": "byivo/github-org-pr-listing",
+    "description": "List all closed pull requests from a given Github Organization and users",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "ByIvo",
+            "email": "irbatistela@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "GithubPrListing\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Test\\GithubPrListing\\": "tests/"
+        }
+    },
+    "require": {
+        "guzzlehttp/guzzle": "^6.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^7.5"
+    }
+}
