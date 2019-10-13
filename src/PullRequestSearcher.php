@@ -3,6 +3,7 @@
 namespace GithubPrListing;
 
 use GuzzleHttp\Client;
+use http\QueryString;
 
 class PullRequestSearcher {
 
@@ -14,7 +15,11 @@ class PullRequestSearcher {
 	}
 
 	public function search(): array {
-		$response = $this->client->post('uri');
+		$response = $this->client->get('uri', [
+			query => [
+				'q' => 'type:pr is:closed'
+			]
+		]);
 		$rawBodyResponse = strval($response->getBody());
 
 		$parsedResponse = json_decode($rawBodyResponse);

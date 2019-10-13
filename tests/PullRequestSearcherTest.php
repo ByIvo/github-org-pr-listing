@@ -7,6 +7,7 @@ use GithubPrListing\PullRequestSearcher;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
@@ -31,6 +32,29 @@ class PullRequestSearcherTest extends TestCase {
 		];
 		Assert::assertEquals($expectedPullRequestList, $pullRequestList);
 	}
+
+	/** @test */
+	public function whenRequestAPullRequestList_shouldFilterOnlyClosedPullRequests(): void {
+		$requestHistory = [];
+		$emptyResponse = $this->getMockedGithubPullRequestListResponse([]);
+		$expectedGithubResponse = new Response($status = 200, $headers = [], $emptyResponse);
+		$client = $this->createClientWithMockedResponse($expectedGithubResponse, $requestHistory);
+
+		$pullRequestSearcher = new PullRequestSearcher($client);
+		$pullRequestSearcher->search();
+
+		/** @var $request \GuzzleHttp\Psr7\Request */
+		$request = $requestHistory[0]['request'];
+
+		$requestQueryParameters = $request->getUri()->getQuery();
+		$filterParameter = [];
+		parse_str($requestQueryParameters, $filterParameter);
+		$rawQueryString = $filterParameter['q'];
+
+		Assert::assertContains('type:pr', $rawQueryString);
+		Assert::assertContains('is:closed', $rawQueryString);
+	}
+
 
 	private function getMockedGithubPullRequestListResponse(array $mockedPullRequests): string {
 		$pullRequestsCount = count($mockedPullRequests);
@@ -67,12 +91,15 @@ JSON;
 
 	}
 
-	private function createClientWithMockedResponse(Response $expectedGithubResponse): Client {
+	private function createClientWithMockedResponse(Response $expectedGithubResponse, &$requestHistory = []): Client {
 		$mocks = new MockHandler([
 			$expectedGithubResponse
 		]);
 
 		$handler = HandlerStack::create($mocks);
+
+		$middlewareHistory = Middleware::history($requestHistory);
+		$handler->push($middlewareHistory);
 
 		return new Client([
 			'handler' => $handler,
