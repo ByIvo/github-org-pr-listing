@@ -55,6 +55,28 @@ class PullRequestSearcherTest extends TestCase {
 		Assert::assertContains('is:closed', $rawQueryString);
 	}
 
+	/** @test */
+	public function whenRequestAPullRequestList_shouldFilterOrganizationProvidedAsEnvironmentVariable(): void {
+		$requestHistory = [];
+		$emptyResponse = $this->getMockedGithubPullRequestListResponse([]);
+		$expectedGithubResponse = new Response($status = 200, $headers = [], $emptyResponse);
+		$client = $this->createClientWithMockedResponse($expectedGithubResponse, $requestHistory);
+		putenv("PR_LISTING_GITHUB_ORG=desired-company");
+
+		$pullRequestSearcher = new PullRequestSearcher($client);
+		$pullRequestSearcher->search();
+
+		/** @var $request \GuzzleHttp\Psr7\Request */
+		$request = $requestHistory[0]['request'];
+
+		$requestQueryParameters = $request->getUri()->getQuery();
+		$filterParameter = [];
+		parse_str($requestQueryParameters, $filterParameter);
+		$rawQueryString = $filterParameter['q'];
+
+		Assert::assertContains('org:desired-company', $rawQueryString);
+	}
+
 
 	private function getMockedGithubPullRequestListResponse(array $mockedPullRequests): string {
 		$pullRequestsCount = count($mockedPullRequests);

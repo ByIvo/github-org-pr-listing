@@ -3,7 +3,6 @@
 namespace GithubPrListing;
 
 use GuzzleHttp\Client;
-use http\QueryString;
 
 class PullRequestSearcher {
 
@@ -15,9 +14,10 @@ class PullRequestSearcher {
 	}
 
 	public function search(): array {
+		$githubOrganization = getenv('PR_LISTING_GITHUB_ORG');
 		$response = $this->client->get('uri', [
 			query => [
-				'q' => 'type:pr is:closed'
+				'q' => "type:pr is:closed org:{$githubOrganization}"
 			]
 		]);
 		$rawBodyResponse = strval($response->getBody());
