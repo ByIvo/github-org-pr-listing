@@ -36,53 +36,53 @@ class PullRequestSearcherTest extends TestCase {
 
 	/** @test */
 	public function whenRequestAPullRequestList_shouldFilterOnlyClosedPullRequests(): void {
-		$requestHistory = [];
-		$client = $this->getRequestHistoryWithEmptyMockedResponses($requestHistory);
+		$requestHistoryWithMutableReference = [];
+		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
 
 		$pullRequestSearcher = new PullRequestSearcher($client);
 		$pullRequestSearcher->search();
 
-		$rawFilterParameters =	$this->extractFilterParametersFromFirstRequest($requestHistory);
+		$rawFilterParameters =	$this->extractFilterParametersFromFirstRequest($requestHistoryWithMutableReference);
 		Assert::assertContains('type:pr', $rawFilterParameters);
 		Assert::assertContains('is:closed', $rawFilterParameters);
 	}
 
 	/** @test */
 	public function whenRequestAPullRequestList_shouldFilterOrganizationProvidedAsEnvironmentVariable(): void {
-		$requestHistory = [];
-		$client = $this->getRequestHistoryWithEmptyMockedResponses($requestHistory);
+		$requestHistoryWithMutableReference = [];
+		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
 		putenv("PR_LISTING_GITHUB_ORG=desired-company");
 
 		$pullRequestSearcher = new PullRequestSearcher($client);
 		$pullRequestSearcher->search();
 
-		$rawFilterParameters =	$this->extractFilterParametersFromFirstRequest($requestHistory);
+		$rawFilterParameters =	$this->extractFilterParametersFromFirstRequest($requestHistoryWithMutableReference);
 		Assert::assertContains('org:desired-company', $rawFilterParameters);
 	}
 
 	/** @test */
 	public function whenRequestAPullRequestList_shouldFilterAuthorProvidedAsEnvironmentVariable(): void {
-		$requestHistory = [];
-		$client = $this->getRequestHistoryWithEmptyMockedResponses($requestHistory);
+		$requestHistoryWithMutableReference = [];
+		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
 		putenv("PR_LISTING_AUTHOR=byivo");
 
 		$pullRequestSearcher = new PullRequestSearcher($client);
 		$pullRequestSearcher->search();
 
-		$rawFilterParameters =	$this->extractFilterParametersFromFirstRequest($requestHistory);
+		$rawFilterParameters =	$this->extractFilterParametersFromFirstRequest($requestHistoryWithMutableReference);
 		Assert::assertContains('author:byivo', $rawFilterParameters);
 	}
 
 	/** @test */
 	public function givenMultipleAuthors_whenRequestAPullRequestList_shouldAddAllAuthorsInFilterParameters(): void {
-		$requestHistory = [];
-		$client = $this->getRequestHistoryWithEmptyMockedResponses($requestHistory);
+		$requestHistoryWithMutableReference = [];
+		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
 		putenv("PR_LISTING_AUTHOR=byivo jhmachado deenison");
 
 		$pullRequestSearcher = new PullRequestSearcher($client);
 		$pullRequestSearcher->search();
 
-		$rawFilterParameters =	$this->extractFilterParametersFromFirstRequest($requestHistory);
+		$rawFilterParameters =	$this->extractFilterParametersFromFirstRequest($requestHistoryWithMutableReference);
 		Assert::assertContains('author:byivo', $rawFilterParameters);
 		Assert::assertContains('author:jhmachado', $rawFilterParameters);
 		Assert::assertContains('author:deenison', $rawFilterParameters);
@@ -90,21 +90,21 @@ class PullRequestSearcherTest extends TestCase {
 
 	/** @test */
 	public function whenRequestAPullRequestList_shouldFilterMergedDateProvidedAsEnvironmentVariable(): void {
-		$requestHistory = [];
-		$client = $this->getRequestHistoryWithEmptyMockedResponses($requestHistory);
+		$requestHistoryWithMutableReference = [];
+		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
 		putenv("PR_LISTING_MERGE_INTERVAL=2019-07-01..2019-09-30");
 
 		$pullRequestSearcher = new PullRequestSearcher($client);
 		$pullRequestSearcher->search();
 
-		$rawFilterParameters =	$this->extractFilterParametersFromFirstRequest($requestHistory);
+		$rawFilterParameters =	$this->extractFilterParametersFromFirstRequest($requestHistoryWithMutableReference);
 		Assert::assertContains('merged:2019-07-01..2019-09-30', $rawFilterParameters);
 	}
 
 	/** @test */
 	public function givenAllEnvironmentVariables_whenRequestAPullRequestList_shouldAddQueryParameterWithAllFilters(): void {
-		$requestHistory = [];
-		$client = $this->getRequestHistoryWithEmptyMockedResponses($requestHistory);
+		$requestHistoryWithMutableReference = [];
+		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
 		putenv("PR_LISTING_GITHUB_ORG=great_org");
 		putenv("PR_LISTING_AUTHOR=author1 author2");
 		putenv("PR_LISTING_MERGE_INTERVAL=2019-10-01..2019-12-31");
@@ -112,7 +112,7 @@ class PullRequestSearcherTest extends TestCase {
 		$pullRequestSearcher = new PullRequestSearcher($client);
 		$pullRequestSearcher->search();
 
-		$allRequestQueryParameters = $this->extractQueryParametersFromFirstRequest($requestHistory);
+		$allRequestQueryParameters = $this->extractQueryParametersFromFirstRequest($requestHistoryWithMutableReference);
 		Assert::assertEquals(
 			'type:pr is:closed org:great_org author:author1 author:author2 merged:2019-10-01..2019-12-31',
 			$allRequestQueryParameters['q']
@@ -121,43 +121,43 @@ class PullRequestSearcherTest extends TestCase {
 
 	/** @test */
 	public function givenAnEnvironmentCredentials_whenRequestAPullRequestList_shouldCreateBasicAuthenticationInRequestHeader(): void {
-		$requestHistory = [];
-		$client = $this->getRequestHistoryWithEmptyMockedResponses($requestHistory);
+		$requestHistoryWithMutableReference = [];
+		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
 		putenv("PR_LISTING_BASIC_AUTH_CREDENTIALS=username:auth_token");
 
 		$pullRequestSearcher = new PullRequestSearcher($client);
 		$pullRequestSearcher->search();
 
-		$firstRequestAuthorizationHeader =	$this->extractFirstRequest($requestHistory)->getHeaderLine('Authorization');
+		$firstRequestAuthorizationHeader =	$this->extractFirstRequest($requestHistoryWithMutableReference)->getHeaderLine('Authorization');
 		$expectedBasicAuth = 'Basic ' . base64_encode('username:auth_token');
 		Assert::assertEquals($expectedBasicAuth, $firstRequestAuthorizationHeader);
 	}
 
 	/** @test */
 	public function whenRequestAPullRequestList_shouldUseCorrectlyGithubUri(): void {
-		$requestHistory = [];
-		$client = $this->getRequestHistoryWithEmptyMockedResponses($requestHistory);
+		$requestHistoryWithMutableReference = [];
+		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
 
 		$pullRequestSearcher = new PullRequestSearcher($client);
 		$pullRequestSearcher->search();
 
-		$uri =	$this->extractFirstRequest($requestHistory)->getUri();
+		$uri =	$this->extractFirstRequest($requestHistoryWithMutableReference)->getUri();
 		Assert::assertStringStartsWith('https://api.github.com/search/issues', strval($uri));
 	}
 
-	private function getRequestHistoryWithEmptyMockedResponses(array &$requestHistory): Client {
+	private function fillRequestHistoryAndCreateClientWithEmptyMockedResponses(array &$requestHistoryWithMutableReference): Client {
 		$emptyResponse = $this->getMockedGithubPullRequestListResponse([]);
 		$expectedGithubResponse = new Response($status = 200, $headers = [], $emptyResponse);
-		return  $this->createClientWithMockedResponse($expectedGithubResponse, $requestHistory);
+		return  $this->createClientWithMockedResponse($expectedGithubResponse, $requestHistoryWithMutableReference);
 	}
 
-	private function extractFilterParametersFromFirstRequest(array $requestHistory): string {
-		$filterParameter = $this->extractQueryParametersFromFirstRequest($requestHistory);
+	private function extractFilterParametersFromFirstRequest(array $requestHistoryWithMutableReference): string {
+		$filterParameter = $this->extractQueryParametersFromFirstRequest($requestHistoryWithMutableReference);
 		return $filterParameter['q'];
 	}
 
-	private function extractQueryParametersFromFirstRequest(array $requestHistory): array {
-		$request = $this->extractFirstRequest($requestHistory);
+	private function extractQueryParametersFromFirstRequest(array $requestHistoryWithMutableReference): array {
+		$request = $this->extractFirstRequest($requestHistoryWithMutableReference);
 
 		$requestQueryParameters = $request->getUri()->getQuery();
 		$filterParameter = [];
@@ -166,9 +166,9 @@ class PullRequestSearcherTest extends TestCase {
 		return $filterParameter;
 	}
 
-	private function extractFirstRequest(array $requestHistory): Request {
+	private function extractFirstRequest(array $requestHistoryWithMutableReference): Request {
 		/** @var $request \GuzzleHttp\Psr7\Request */
-		return $requestHistory[0]['request'];
+		return $requestHistoryWithMutableReference[0]['request'];
 	}
 
 	private function getMockedGithubPullRequestListResponse(array $mockedPullRequests): string {
@@ -206,14 +206,14 @@ JSON;
 
 	}
 
-	private function createClientWithMockedResponse(Response $expectedGithubResponse, &$requestHistory = []): Client {
+	private function createClientWithMockedResponse(Response $expectedGithubResponse, &$requestHistoryWithMutableReference = []): Client {
 		$mocks = new MockHandler([
 			$expectedGithubResponse
 		]);
 
 		$handler = HandlerStack::create($mocks);
 
-		$middlewareHistory = Middleware::history($requestHistory);
+		$middlewareHistory = Middleware::history($requestHistoryWithMutableReference);
 		$handler->push($middlewareHistory);
 
 		return new Client([
