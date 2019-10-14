@@ -118,6 +118,26 @@ class PullRequestSearcherTest extends TestCase {
 		);
 	}
 
+	public function givenAnEnvironmentCredentials_whenRequestAPullRequestList_shouldCreateBasicAuthenticationInRequestHeader(): void {
+		$requestHistory = [];
+		$client = $this->getRequestHistoryWithEmptyMockedResponses($requestHistory);
+		putenv("PR_LISTING_BASIC_AUTH_CREDENTIALS=username:auth_token");
+
+		$pullRequestSearcher = new PullRequestSearcher($client);
+		$pullRequestSearcher->search();
+
+		$firstRequestHeaders =	$this->extractHeadersFromFirstRequest($requestHistory);
+		$expectedBasicAuth = 'Basic ' . base64_encode('username:auth_token');
+		Assert::assertContains($expectedBasicAuth, $firstRequestHeaders['Authorization']);
+	}
+
+	private function extractHeadersFromFirstRequest(array $requestHistory): array {
+		/** @var $request \GuzzleHttp\Psr7\Request */
+		$request = $requestHistory[0]['request'];
+
+		return $request->getHeaders();
+	}
+
 	private function getRequestHistoryWithEmptyMockedResponses(array &$requestHistory): Client {
 		$emptyResponse = $this->getMockedGithubPullRequestListResponse([]);
 		$expectedGithubResponse = new Response($status = 200, $headers = [], $emptyResponse);
