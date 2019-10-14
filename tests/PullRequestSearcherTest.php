@@ -100,6 +100,24 @@ class PullRequestSearcherTest extends TestCase {
 		Assert::assertContains('merged:2019-07-01..2019-09-30', $rawFilterParameters);
 	}
 
+	/** @test */
+	public function givenAllEnvironmentVariables_whenRequestAPullRequestList_shouldAddQueryParameterWithAllFilters(): void {
+		$requestHistory = [];
+		$client = $this->getRequestHistoryWithEmptyMockedResponses($requestHistory);
+		putenv("PR_LISTING_GITHUB_ORG=great_org");
+		putenv("PR_LISTING_AUTHOR=author1 author2");
+		putenv("PR_LISTING_MERGE_INTERVAL=2019-10-01..2019-12-31");
+
+		$pullRequestSearcher = new PullRequestSearcher($client);
+		$pullRequestSearcher->search();
+
+		$allRequestQueryParameters = $this->extractQueryParametersFromFirstRequest($requestHistory);
+		Assert::assertEquals(
+			'type:pr is:closed org:great_org author:author1 author:author2 merged:2019-10-01..2019-12-31',
+			$allRequestQueryParameters['q']
+		);
+	}
+
 	private function getRequestHistoryWithEmptyMockedResponses(array &$requestHistory): Client {
 		$emptyResponse = $this->getMockedGithubPullRequestListResponse([]);
 		$expectedGithubResponse = new Response($status = 200, $headers = [], $emptyResponse);
@@ -107,15 +125,19 @@ class PullRequestSearcherTest extends TestCase {
 	}
 
 	private function extractFilterParametersFromFirstRequest(array $requestHistory): string {
+		$filterParameter = $this->extractQueryParametersFromFirstRequest($requestHistory);
+		return $filterParameter['q'];
+	}
+
+	private function extractQueryParametersFromFirstRequest(array $requestHistory): array {
 		/** @var $request \GuzzleHttp\Psr7\Request */
 		$request = $requestHistory[0]['request'];
 
 		$requestQueryParameters = $request->getUri()->getQuery();
 		$filterParameter = [];
 		parse_str($requestQueryParameters, $filterParameter);
-		$rawFilterParameters = $filterParameter['q'];
 
-		return $rawFilterParameters;
+		return $filterParameter;
 	}
 
 	private function getMockedGithubPullRequestListResponse(array $mockedPullRequests): string {
