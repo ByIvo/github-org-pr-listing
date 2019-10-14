@@ -72,6 +72,21 @@ class PullRequestSearcherTest extends TestCase {
 		Assert::assertContains('author:byivo', $rawFilterParameters);
 	}
 
+	/** @test */
+	public function givenMultipleAuthors_whenRequestAPullRequestList_shouldAddAllAuthorsInFilterParameters(): void {
+		$requestHistory = [];
+		$client = $this->getRequestHistoryWithEmptyMockedResponses($requestHistory);
+		putenv("PR_LISTING_AUTHOR=byivo jhmachado deenison");
+
+		$pullRequestSearcher = new PullRequestSearcher($client);
+		$pullRequestSearcher->search();
+
+		$rawFilterParameters =	$this->extractFilterParametersFromFirstRequest($requestHistory);
+		Assert::assertContains('author:byivo', $rawFilterParameters);
+		Assert::assertContains('author:jhmachado', $rawFilterParameters);
+		Assert::assertContains('author:deenison', $rawFilterParameters);
+	}
+
 	private function getRequestHistoryWithEmptyMockedResponses(array &$requestHistory): Client {
 		$emptyResponse = $this->getMockedGithubPullRequestListResponse([]);
 		$expectedGithubResponse = new Response($status = 200, $headers = [], $emptyResponse);

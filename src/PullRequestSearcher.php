@@ -15,11 +15,12 @@ class PullRequestSearcher {
 
 	public function search(): array {
 		$githubOrganization = getenv('PR_LISTING_GITHUB_ORG');
-		$pullRequestAuthor = getenv('PR_LISTING_AUTHOR');
+		$pullRequestAuthors = getenv('PR_LISTING_AUTHOR');
+		$authorsFilterParameter = 'author:' . implode(' author:', mb_split(' ', $pullRequestAuthors));
 
 		$response = $this->client->get('uri', [
 			'query' => [
-				'q' => "type:pr is:closed org:{$githubOrganization} author:{$pullRequestAuthor}"
+				'q' => "type:pr is:closed org:{$githubOrganization} {$authorsFilterParameter}"
 			]
 		]);
 		$rawBodyResponse = strval($response->getBody());
