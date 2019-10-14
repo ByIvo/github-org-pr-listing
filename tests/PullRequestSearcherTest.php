@@ -36,67 +36,58 @@ class PullRequestSearcherTest extends TestCase {
 	/** @test */
 	public function whenRequestAPullRequestList_shouldFilterOnlyClosedPullRequests(): void {
 		$requestHistory = [];
-		$emptyResponse = $this->getMockedGithubPullRequestListResponse([]);
-		$expectedGithubResponse = new Response($status = 200, $headers = [], $emptyResponse);
-		$client = $this->createClientWithMockedResponse($expectedGithubResponse, $requestHistory);
+		$client = $this->getRequestHistoryWithEmptyMockedResponses($requestHistory);
 
 		$pullRequestSearcher = new PullRequestSearcher($client);
 		$pullRequestSearcher->search();
 
-		/** @var $request \GuzzleHttp\Psr7\Request */
-		$request = $requestHistory[0]['request'];
-
-		$requestQueryParameters = $request->getUri()->getQuery();
-		$filterParameter = [];
-		parse_str($requestQueryParameters, $filterParameter);
-		$rawQueryString = $filterParameter['q'];
-
-		Assert::assertContains('type:pr', $rawQueryString);
-		Assert::assertContains('is:closed', $rawQueryString);
+		$rawFilterParameters =	$this->extractFilterParametersFromFirstRequest($requestHistory);
+		Assert::assertContains('type:pr', $rawFilterParameters);
+		Assert::assertContains('is:closed', $rawFilterParameters);
 	}
 
 	/** @test */
 	public function whenRequestAPullRequestList_shouldFilterOrganizationProvidedAsEnvironmentVariable(): void {
 		$requestHistory = [];
-		$emptyResponse = $this->getMockedGithubPullRequestListResponse([]);
-		$expectedGithubResponse = new Response($status = 200, $headers = [], $emptyResponse);
-		$client = $this->createClientWithMockedResponse($expectedGithubResponse, $requestHistory);
+		$client = $this->getRequestHistoryWithEmptyMockedResponses($requestHistory);
 		putenv("PR_LISTING_GITHUB_ORG=desired-company");
 
 		$pullRequestSearcher = new PullRequestSearcher($client);
 		$pullRequestSearcher->search();
 
-		/** @var $request \GuzzleHttp\Psr7\Request */
-		$request = $requestHistory[0]['request'];
-
-		$requestQueryParameters = $request->getUri()->getQuery();
-		$filterParameter = [];
-		parse_str($requestQueryParameters, $filterParameter);
-		$rawQueryString = $filterParameter['q'];
-
-		Assert::assertContains('org:desired-company', $rawQueryString);
+		$rawFilterParameters =	$this->extractFilterParametersFromFirstRequest($requestHistory);
+		Assert::assertContains('org:desired-company', $rawFilterParameters);
 	}
 
 	/** @test */
 	public function whenRequestAPullRequestList_shouldFilterAuthorProvidedAsEnvironmentVariable(): void {
 		$requestHistory = [];
-		$emptyResponse = $this->getMockedGithubPullRequestListResponse([]);
-		$expectedGithubResponse = new Response($status = 200, $headers = [], $emptyResponse);
-		$client = $this->createClientWithMockedResponse($expectedGithubResponse, $requestHistory);
+		$client = $this->getRequestHistoryWithEmptyMockedResponses($requestHistory);
 		putenv("PR_LISTING_AUTHOR=byivo");
 
 		$pullRequestSearcher = new PullRequestSearcher($client);
 		$pullRequestSearcher->search();
 
+		$rawFilterParameters =	$this->extractFilterParametersFromFirstRequest($requestHistory);
+		Assert::assertContains('author:byivo', $rawFilterParameters);
+	}
+
+	private function getRequestHistoryWithEmptyMockedResponses(array &$requestHistory): Client {
+		$emptyResponse = $this->getMockedGithubPullRequestListResponse([]);
+		$expectedGithubResponse = new Response($status = 200, $headers = [], $emptyResponse);
+		return  $this->createClientWithMockedResponse($expectedGithubResponse, $requestHistory);
+	}
+
+	private function extractFilterParametersFromFirstRequest(array $requestHistory): string {
 		/** @var $request \GuzzleHttp\Psr7\Request */
 		$request = $requestHistory[0]['request'];
 
 		$requestQueryParameters = $request->getUri()->getQuery();
 		$filterParameter = [];
 		parse_str($requestQueryParameters, $filterParameter);
-		$rawQueryString = $filterParameter['q'];
+		$rawFilterParameters = $filterParameter['q'];
 
-		Assert::assertContains('author:byivo', $rawQueryString);
+		return $rawFilterParameters;
 	}
 
 	private function getMockedGithubPullRequestListResponse(array $mockedPullRequests): string {
