@@ -15,12 +15,13 @@ class PullRequestSearcher {
 
 	public function search(): array {
 		$githubOrganization = getenv('PR_LISTING_GITHUB_ORG');
+		$mergeInterval = getenv('PR_LISTING_MERGE_INTERVAL');
 		$pullRequestAuthors = getenv('PR_LISTING_AUTHOR');
 		$authorsFilterParameter = 'author:' . implode(' author:', mb_split(' ', $pullRequestAuthors));
 
 		$response = $this->client->get('uri', [
 			'query' => [
-				'q' => "type:pr is:closed org:{$githubOrganization} {$authorsFilterParameter}"
+				'q' => "type:pr is:closed org:{$githubOrganization} {$authorsFilterParameter} merged:{$mergeInterval}"
 			]
 		]);
 		$rawBodyResponse = strval($response->getBody());

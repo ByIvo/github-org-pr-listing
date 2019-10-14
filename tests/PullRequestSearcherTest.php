@@ -87,6 +87,19 @@ class PullRequestSearcherTest extends TestCase {
 		Assert::assertContains('author:deenison', $rawFilterParameters);
 	}
 
+	/** @test */
+	public function whenRequestAPullRequestList_shouldFilterMergedDateProvidedAsEnvironmentVariable(): void {
+		$requestHistory = [];
+		$client = $this->getRequestHistoryWithEmptyMockedResponses($requestHistory);
+		putenv("PR_LISTING_MERGE_INTERVAL=2019-07-01..2019-09-30");
+
+		$pullRequestSearcher = new PullRequestSearcher($client);
+		$pullRequestSearcher->search();
+
+		$rawFilterParameters =	$this->extractFilterParametersFromFirstRequest($requestHistory);
+		Assert::assertContains('merged:2019-07-01..2019-09-30', $rawFilterParameters);
+	}
+
 	private function getRequestHistoryWithEmptyMockedResponses(array &$requestHistory): Client {
 		$emptyResponse = $this->getMockedGithubPullRequestListResponse([]);
 		$expectedGithubResponse = new Response($status = 200, $headers = [], $emptyResponse);
