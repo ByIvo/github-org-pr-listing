@@ -8,6 +8,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
@@ -118,6 +119,7 @@ class PullRequestSearcherTest extends TestCase {
 		);
 	}
 
+	/** @test */
 	public function givenAnEnvironmentCredentials_whenRequestAPullRequestList_shouldCreateBasicAuthenticationInRequestHeader(): void {
 		$requestHistory = [];
 		$client = $this->getRequestHistoryWithEmptyMockedResponses($requestHistory);
@@ -126,16 +128,9 @@ class PullRequestSearcherTest extends TestCase {
 		$pullRequestSearcher = new PullRequestSearcher($client);
 		$pullRequestSearcher->search();
 
-		$firstRequestHeaders =	$this->extractHeadersFromFirstRequest($requestHistory);
+		$firstRequestHeaders =	$this->extractFirstRequest($requestHistory)->getHeaders();
 		$expectedBasicAuth = 'Basic ' . base64_encode('username:auth_token');
 		Assert::assertContains($expectedBasicAuth, $firstRequestHeaders['Authorization']);
-	}
-
-	private function extractHeadersFromFirstRequest(array $requestHistory): array {
-		/** @var $request \GuzzleHttp\Psr7\Request */
-		$request = $requestHistory[0]['request'];
-
-		return $request->getHeaders();
 	}
 
 	private function getRequestHistoryWithEmptyMockedResponses(array &$requestHistory): Client {
@@ -150,14 +145,18 @@ class PullRequestSearcherTest extends TestCase {
 	}
 
 	private function extractQueryParametersFromFirstRequest(array $requestHistory): array {
-		/** @var $request \GuzzleHttp\Psr7\Request */
-		$request = $requestHistory[0]['request'];
+		$request = $this->extractFirstRequest($requestHistory);
 
 		$requestQueryParameters = $request->getUri()->getQuery();
 		$filterParameter = [];
 		parse_str($requestQueryParameters, $filterParameter);
 
 		return $filterParameter;
+	}
+
+	private function extractFirstRequest(array $requestHistory): Request {
+		/** @var $request \GuzzleHttp\Psr7\Request */
+		return $requestHistory[0]['request'];
 	}
 
 	private function getMockedGithubPullRequestListResponse(array $mockedPullRequests): string {
