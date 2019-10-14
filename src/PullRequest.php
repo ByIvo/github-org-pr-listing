@@ -2,7 +2,7 @@
 
 namespace GithubPrListing;
 
-class PullRequest {
+class PullRequest implements \JsonSerializable {
 
 	/** @var string */
 	private $title;
@@ -11,12 +11,21 @@ class PullRequest {
 	/** @var string */
 	private $url;
 	/** @var \DateTime */
-	private $closedAt;
+	private $mergedAt;
 
-	public function __construct(string $title, string $author, string $url, \DateTime $closedAt) {
+	public function __construct(string $title, string $author, string $url, \DateTime $mergedAt) {
 		$this->title = $title;
 		$this->author = $author;
 		$this->url = $url;
-		$this->closedAt = $closedAt;
+		$this->mergedAt = $mergedAt;
+	}
+
+	public function jsonSerialize() {
+		return [
+			'title' => $this->title,
+			'author' => $this->author,
+			'url' => $this->url,
+			'mergedAt' => $this->mergedAt->format('d/m/Y'),
+		];
 	}
 }
