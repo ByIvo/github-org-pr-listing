@@ -128,9 +128,9 @@ class PullRequestSearcherTest extends TestCase {
 		$pullRequestSearcher = new PullRequestSearcher($client);
 		$pullRequestSearcher->search();
 
-		$firstRequestHeaders =	$this->extractFirstRequest($requestHistory)->getHeaders();
+		$firstRequestAuthorizationHeader =	$this->extractFirstRequest($requestHistory)->getHeaderLine('Authorization');
 		$expectedBasicAuth = 'Basic ' . base64_encode('username:auth_token');
-		Assert::assertContains($expectedBasicAuth, $firstRequestHeaders['Authorization']);
+		Assert::assertEquals($expectedBasicAuth, $firstRequestAuthorizationHeader);
 	}
 
 	/** @test */
