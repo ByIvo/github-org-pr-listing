@@ -77,6 +77,27 @@ class PullRequestSearcherTest extends TestCase {
 		Assert::assertContains('org:desired-company', $rawQueryString);
 	}
 
+	/** @test */
+	public function whenRequestAPullRequestList_shouldFilterAuthorProvidedAsEnvironmentVariable(): void {
+		$requestHistory = [];
+		$emptyResponse = $this->getMockedGithubPullRequestListResponse([]);
+		$expectedGithubResponse = new Response($status = 200, $headers = [], $emptyResponse);
+		$client = $this->createClientWithMockedResponse($expectedGithubResponse, $requestHistory);
+		putenv("PR_LISTING_AUTHOR=byivo");
+
+		$pullRequestSearcher = new PullRequestSearcher($client);
+		$pullRequestSearcher->search();
+
+		/** @var $request \GuzzleHttp\Psr7\Request */
+		$request = $requestHistory[0]['request'];
+
+		$requestQueryParameters = $request->getUri()->getQuery();
+		$filterParameter = [];
+		parse_str($requestQueryParameters, $filterParameter);
+		$rawQueryString = $filterParameter['q'];
+
+		Assert::assertContains('author:byivo', $rawQueryString);
+	}
 
 	private function getMockedGithubPullRequestListResponse(array $mockedPullRequests): string {
 		$pullRequestsCount = count($mockedPullRequests);
