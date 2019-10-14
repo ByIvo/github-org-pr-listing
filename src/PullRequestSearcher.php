@@ -20,7 +20,7 @@ class PullRequestSearcher {
 		$pullRequestAuthors = getenv('PR_LISTING_AUTHOR');
 		$authorsFilterParameter = 'author:' . implode(' author:', mb_split(' ', $pullRequestAuthors));
 
-		$response = $this->client->get('uri', [
+		$response = $this->client->get('https://api.github.com/search/issues', [
 			'query' => [
 				'q' => "type:pr is:closed org:{$githubOrganization} {$authorsFilterParameter} merged:{$mergeInterval}"
 			],

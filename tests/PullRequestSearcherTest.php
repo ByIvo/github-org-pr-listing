@@ -133,6 +133,18 @@ class PullRequestSearcherTest extends TestCase {
 		Assert::assertContains($expectedBasicAuth, $firstRequestHeaders['Authorization']);
 	}
 
+	/** @test */
+	public function whenRequestAPullRequestList_shouldUseCorrectlyGithubUri(): void {
+		$requestHistory = [];
+		$client = $this->getRequestHistoryWithEmptyMockedResponses($requestHistory);
+
+		$pullRequestSearcher = new PullRequestSearcher($client);
+		$pullRequestSearcher->search();
+
+		$uri =	$this->extractFirstRequest($requestHistory)->getUri();
+		Assert::assertStringStartsWith('https://api.github.com/search/issues', strval($uri));
+	}
+
 	private function getRequestHistoryWithEmptyMockedResponses(array &$requestHistory): Client {
 		$emptyResponse = $this->getMockedGithubPullRequestListResponse([]);
 		$expectedGithubResponse = new Response($status = 200, $headers = [], $emptyResponse);
