@@ -15,10 +15,18 @@ use PHPUnit\Framework\TestCase;
 
 class PullRequestSearcherTest extends TestCase {
 
+	/** @var array */
+	private $envProperties;
+
+	protected function setUp() {
+		parent::setUp();
+
+		$this->envProperties = [];
+	}
+
 	/** @test */
 	public function givenAGithubPullRequestResponse_whenListingPullRequest_shouldCreateAPullRequestInfoWithTotalCount(): void {
-		$body = $this->getMockedResponseWithTotalAmount(2);
-		$expectedGithubResponse = new Response($status = 200, $headers = [], $body);
+		$expectedGithubResponse = $this->getStatusOkResponseWithTotalCountPullRequest(2);
 		$client = $this->createClientWithMockedResponses([$expectedGithubResponse]);
 
 		$pullRequestSearcher = new PullRequestSearcher($client);
@@ -45,7 +53,7 @@ class PullRequestSearcherTest extends TestCase {
 	public function whenRequestAPullRequestSearch_shouldFilterOrganizationProvidedAsEnvironmentVariable(): void {
 		$requestHistoryWithMutableReference = [];
 		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
-		putenv("PR_LISTING_GITHUB_ORG=desired-company");
+		$this->setEnv("PR_LISTING_GITHUB_ORG","desired-company");
 
 		$pullRequestSearcher = new PullRequestSearcher($client);
 		$pullRequestSearcher->search();
@@ -58,7 +66,7 @@ class PullRequestSearcherTest extends TestCase {
 	public function whenRequestAPullRequestSearch_shouldFilterAuthorProvidedAsEnvironmentVariable(): void {
 		$requestHistoryWithMutableReference = [];
 		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
-		putenv("PR_LISTING_AUTHOR=byivo");
+		$this->setEnv("PR_LISTING_AUTHOR","byivo");
 
 		$pullRequestSearcher = new PullRequestSearcher($client);
 		$pullRequestSearcher->search();
@@ -68,25 +76,31 @@ class PullRequestSearcherTest extends TestCase {
 	}
 
 	/** @test */
-	public function givenMultipleAuthors_whenRequestAPullRequestSearch_shouldAddAllAuthorsInFilterParameters(): void {
+	public function givenMultipleAuthors_whenRequestAPullRequestSearch_shouldRequestATotalCountPullRequestEach(): void {
+		$this->setEnv("PR_LISTING_AUTHOR","byivo jhmachado deenison");
+		$firstAuthorExpectedGithubResponse = $this->getStatusOkResponseWithTotalCountPullRequest(1);
+		$secondExpectedGithubResponse = $this->getStatusOkResponseWithTotalCountPullRequest(2);
+		$lastExpectedGithubResponse = $this->getStatusOkResponseWithTotalCountPullRequest(4);
+		$expectedGithubResponses = [
+			$firstAuthorExpectedGithubResponse,
+			$secondExpectedGithubResponse,
+			$lastExpectedGithubResponse
+		];
 		$requestHistoryWithMutableReference = [];
-		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
-		putenv("PR_LISTING_AUTHOR=byivo jhmachado deenison");
+		$client = $this->createClientWithMockedResponses($expectedGithubResponses, $requestHistoryWithMutableReference);
 
 		$pullRequestSearcher = new PullRequestSearcher($client);
-		$pullRequestSearcher->search();
+		$rangePullRequestInfo = $pullRequestSearcher->search();
 
-		$rawFilterParameters =	$this->extractFilterParametersFromFirstRequest($requestHistoryWithMutableReference);
-		Assert::assertContains('author:byivo', $rawFilterParameters);
-		Assert::assertContains('author:jhmachado', $rawFilterParameters);
-		Assert::assertContains('author:deenison', $rawFilterParameters);
+		Assert::assertEquals(7, $rangePullRequestInfo->getPullRequestTotalCount());
+		Assert::assertEquals(3, sizeof($requestHistoryWithMutableReference));
 	}
 
 	/** @test */
 	public function whenRequestAPullRequestSearch_shouldFilterMergedDateProvidedAsEnvironmentVariable(): void {
 		$requestHistoryWithMutableReference = [];
 		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
-		putenv("PR_LISTING_MERGE_INTERVAL=2019-07-01..2019-09-30");
+		$this->setEnv("PR_LISTING_MERGE_INTERVAL","2019-07-01..2019-09-30");
 
 		$pullRequestSearcher = new PullRequestSearcher($client);
 		$pullRequestSearcher->search();
@@ -99,16 +113,16 @@ class PullRequestSearcherTest extends TestCase {
 	public function givenAllEnvironmentVariables_whenRequestAPullRequestSearch_shouldAddQueryParameterWithAllFilters(): void {
 		$requestHistoryWithMutableReference = [];
 		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
-		putenv("PR_LISTING_GITHUB_ORG=great_org");
-		putenv("PR_LISTING_AUTHOR=author1 author2");
-		putenv("PR_LISTING_MERGE_INTERVAL=2019-10-01..2019-12-31");
+		$this->setEnv("PR_LISTING_GITHUB_ORG","great_org");
+		$this->setEnv("PR_LISTING_AUTHOR","author1");
+		$this->setEnv("PR_LISTING_MERGE_INTERVAL","2019-10-01..2019-12-31");
 
 		$pullRequestSearcher = new PullRequestSearcher($client);
 		$pullRequestSearcher->search();
 
 		$allRequestQueryParameters = $this->extractQueryParametersFromFirstRequest($requestHistoryWithMutableReference);
 		Assert::assertEquals(
-			'type:pr is:closed org:great_org author:author1 author:author2 merged:2019-10-01..2019-12-31',
+			'type:pr is:closed org:great_org author:author1 merged:2019-10-01..2019-12-31',
 			$allRequestQueryParameters['q']
 		);
 	}
@@ -117,7 +131,7 @@ class PullRequestSearcherTest extends TestCase {
 	public function givenAnEnvironmentCredentials_whenRequestAPullRequestSearch_shouldCreateBasicAuthenticationInRequestHeader(): void {
 		$requestHistoryWithMutableReference = [];
 		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
-		putenv("PR_LISTING_BASIC_AUTH_CREDENTIALS=username:auth_token");
+		$this->setEnv("PR_LISTING_BASIC_AUTH_CREDENTIALS","username:auth_token");
 
 		$pullRequestSearcher = new PullRequestSearcher($client);
 		$pullRequestSearcher->search();
@@ -165,6 +179,11 @@ class PullRequestSearcherTest extends TestCase {
 		return $requestHistoryWithMutableReference[0]['request'];
 	}
 
+	private function getStatusOkResponseWithTotalCountPullRequest(int $totalPullRequestCount): Response {
+		$body = $this->getMockedResponseWithTotalAmount($totalPullRequestCount);
+		return new Response($status = 200, $headers = [], $body);
+	}
+
 	private function getMockedResponseWithTotalAmount(int $totalPullRequestCount): string {
 		return <<<JSON
 {
@@ -184,5 +203,22 @@ JSON;
 		return new Client([
 			'handler' => $handler,
 		]);
+	}
+
+	private function setEnv(string $property, $value): bool {
+		$this->envProperties[] = $property;
+		return putenv("{$property}={$value}");
+	}
+
+	private function clearAllEnvProperties(): void {
+		foreach ($this->envProperties as $envProperty) {
+			$this->setEnv($envProperty, '');
+		}
+	}
+
+	protected function tearDown() {
+		parent::tearDown();
+
+		$this->clearAllEnvProperties();
 	}
 }

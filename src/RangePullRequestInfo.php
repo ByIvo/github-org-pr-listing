@@ -16,4 +16,8 @@ class RangePullRequestInfo implements \JsonSerializable {
 			'totalCount' => $this->pullRequestTotalCount
 		];
 	}
+
+	public function getPullRequestTotalCount(): int {
+		return $this->pullRequestTotalCount;
+	}
 }

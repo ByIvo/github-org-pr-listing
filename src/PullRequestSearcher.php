@@ -18,21 +18,24 @@ class PullRequestSearcher {
 		$mergeInterval = getenv('PR_LISTING_MERGE_INTERVAL');
 		$githubCredentials = getenv('PR_LISTING_BASIC_AUTH_CREDENTIALS');
 		$pullRequestAuthors = getenv('PR_LISTING_AUTHOR');
-		$authorsFilterParameter = 'author:' . implode(' author:', mb_split(' ', $pullRequestAuthors));
+		$authors = mb_split(' ', $pullRequestAuthors);
 
-		$response = $this->client->get('https://api.github.com/search/issues', [
-			'query' => [
-				'q' => "type:pr is:closed org:{$githubOrganization} {$authorsFilterParameter} merged:{$mergeInterval}"
-			],
-			'headers' => [
-				'Authorization' => 'Basic ' . base64_encode($githubCredentials),
-			],
-		]);
-		$rawBodyResponse = strval($response->getBody());
+		$totalCount = 0;
+		foreach ($authors as $authorUsername) {
+			$response = $this->client->get('https://api.github.com/search/issues', [
+				'query' => [
+					'q' => "type:pr is:closed org:{$githubOrganization} author:{$authorUsername} merged:{$mergeInterval}"
+				],
+				'headers' => [
+					'Authorization' => 'Basic ' . base64_encode($githubCredentials),
+				],
+			]);
+			$rawBodyResponse = strval($response->getBody());
 
-		$parsedResponse = json_decode($rawBodyResponse);
+			$parsedResponse = json_decode($rawBodyResponse);
 
-		$totalCount = $parsedResponse->total_count;
+			$totalCount += $parsedResponse->total_count;
+		}
 
 		return new RangePullRequestInfo($totalCount);
 	}
