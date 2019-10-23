@@ -37,45 +37,6 @@ class PullRequestSearcherTest extends TestCase {
 	}
 
 	/** @test */
-	public function whenRequestAPullRequestSearch_shouldFilterOnlyClosedPullRequests(): void {
-		$requestHistoryWithMutableReference = [];
-		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
-
-		$pullRequestSearcher = new PullRequestSearcher($client);
-		$pullRequestSearcher->search();
-
-		$rawFilterParameters =	$this->extractFilterParametersFromFirstRequest($requestHistoryWithMutableReference);
-		Assert::assertContains('type:pr', $rawFilterParameters);
-		Assert::assertContains('is:closed', $rawFilterParameters);
-	}
-
-	/** @test */
-	public function whenRequestAPullRequestSearch_shouldFilterOrganizationProvidedAsEnvironmentVariable(): void {
-		$requestHistoryWithMutableReference = [];
-		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
-		$this->setEnv("PR_LISTING_GITHUB_ORG","desired-company");
-
-		$pullRequestSearcher = new PullRequestSearcher($client);
-		$pullRequestSearcher->search();
-
-		$rawFilterParameters =	$this->extractFilterParametersFromFirstRequest($requestHistoryWithMutableReference);
-		Assert::assertContains('org:desired-company', $rawFilterParameters);
-	}
-
-	/** @test */
-	public function whenRequestAPullRequestSearch_shouldFilterAuthorProvidedAsEnvironmentVariable(): void {
-		$requestHistoryWithMutableReference = [];
-		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
-		$this->setEnv("PR_LISTING_AUTHOR","byivo");
-
-		$pullRequestSearcher = new PullRequestSearcher($client);
-		$pullRequestSearcher->search();
-
-		$rawFilterParameters =	$this->extractFilterParametersFromFirstRequest($requestHistoryWithMutableReference);
-		Assert::assertContains('author:byivo', $rawFilterParameters);
-	}
-
-	/** @test */
 	public function givenMultipleAuthors_whenRequestAPullRequestSearch_shouldRequestATotalCountPullRequestEach(): void {
 		$this->setEnv("PR_LISTING_AUTHOR","byivo jhmachado deenison");
 		$firstAuthorExpectedGithubResponse = $this->getStatusOkResponseWithTotalCountPullRequest(1);
@@ -97,59 +58,27 @@ class PullRequestSearcherTest extends TestCase {
 	}
 
 	/** @test */
-	public function whenRequestAPullRequestSearch_shouldFilterMergedDateProvidedAsEnvironmentVariable(): void {
-		$requestHistoryWithMutableReference = [];
-		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
-		$this->setEnv("PR_LISTING_MERGE_INTERVAL","2019-07-01..2019-09-30");
-
-		$pullRequestSearcher = new PullRequestSearcher($client);
-		$pullRequestSearcher->search();
-
-		$rawFilterParameters =	$this->extractFilterParametersFromFirstRequest($requestHistoryWithMutableReference);
-		Assert::assertContains('merged:2019-07-01..2019-09-30', $rawFilterParameters);
-	}
-
-	/** @test */
-	public function givenAllEnvironmentVariables_whenRequestAPullRequestSearch_shouldAddQueryParameterWithAllFilters(): void {
+	public function givenAllEnvironmentVariables_whenRequestAPullRequestSearch_shouldCreateAFlawlesslyRequest(): void {
 		$requestHistoryWithMutableReference = [];
 		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
 		$this->setEnv("PR_LISTING_GITHUB_ORG","great_org");
 		$this->setEnv("PR_LISTING_AUTHOR","author1");
 		$this->setEnv("PR_LISTING_MERGE_INTERVAL","2019-10-01..2019-12-31");
-
-		$pullRequestSearcher = new PullRequestSearcher($client);
-		$pullRequestSearcher->search();
-
-		$allRequestQueryParameters = $this->extractQueryParametersFromFirstRequest($requestHistoryWithMutableReference);
-		Assert::assertEquals(
-			'type:pr is:closed org:great_org author:author1 merged:2019-10-01..2019-12-31',
-			$allRequestQueryParameters['q']
-		);
-	}
-
-	/** @test */
-	public function givenAnEnvironmentCredentials_whenRequestAPullRequestSearch_shouldCreateBasicAuthenticationInRequestHeader(): void {
-		$requestHistoryWithMutableReference = [];
-		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
 		$this->setEnv("PR_LISTING_BASIC_AUTH_CREDENTIALS","username:auth_token");
 
 		$pullRequestSearcher = new PullRequestSearcher($client);
 		$pullRequestSearcher->search();
 
-		$firstRequestAuthorizationHeader =	$this->extractFirstRequest($requestHistoryWithMutableReference)->getHeaderLine('Authorization');
-		$expectedBasicAuth = 'Basic ' . base64_encode('username:auth_token');
-		Assert::assertEquals($expectedBasicAuth, $firstRequestAuthorizationHeader);
-	}
+		$firstRequest = $this->extractFirstRequest($requestHistoryWithMutableReference);
+		$authorizationHeader =	$firstRequest->getHeaderLine('Authorization');
+		$uri = $firstRequest->getUri();
+		$allRequestQueryParameters = $this->extractQueryParametersFromRequest($firstRequest);
 
-	/** @test */
-	public function whenRequestAPullRequestSearch_shouldUseCorrectlyGithubUri(): void {
-		$requestHistoryWithMutableReference = [];
-		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
-
-		$pullRequestSearcher = new PullRequestSearcher($client);
-		$pullRequestSearcher->search();
-
-		$uri =	$this->extractFirstRequest($requestHistoryWithMutableReference)->getUri();
+		Assert::assertEquals(
+			'type:pr is:closed org:great_org author:author1 merged:2019-10-01..2019-12-31',
+			$allRequestQueryParameters['q']
+		);
+		Assert::assertEquals('Basic ' . base64_encode('username:auth_token'), $authorizationHeader);
 		Assert::assertStringStartsWith('https://api.github.com/search/issues', strval($uri));
 	}
 
@@ -159,14 +88,7 @@ class PullRequestSearcherTest extends TestCase {
 		return $this->createClientWithMockedResponses([$expectedGithubResponse], $requestHistoryWithMutableReference);
 	}
 
-	private function extractFilterParametersFromFirstRequest(array $requestHistoryWithMutableReference): string {
-		$filterParameter = $this->extractQueryParametersFromFirstRequest($requestHistoryWithMutableReference);
-		return $filterParameter['q'];
-	}
-
-	private function extractQueryParametersFromFirstRequest(array $requestHistoryWithMutableReference): array {
-		$request = $this->extractFirstRequest($requestHistoryWithMutableReference);
-
+	private function extractQueryParametersFromRequest(Request $request): array {
 		$requestQueryParameters = $request->getUri()->getQuery();
 		$filterParameter = [];
 		parse_str($requestQueryParameters, $filterParameter);
