@@ -8,30 +8,22 @@ use PHPUnit\Framework\TestCase;
 
 class PullRequestTest extends TestCase {
 
-	public function getPullRequestData(): array {
+	public function getPullRequestQuantity(): array {
 		return [
-			['title 1', 'author 1', 'http://url1.com', '2019-01-28T15:00:00+02:00', '28/01/2019'],
-			['title 2', 'author 2', 'http://url2.com', '2019-12-31T15:00:00+02:00', '31/12/2019'],
+			[1],
+			[500],
+			[1000],
 		];
 	}
 
-	/** @test @dataProvider getPullRequestData */
-	public function whenParseObjectAsJson_shouldReturnAllObjectProperties(
-		string $title,
-		string $author,
-		string $url,
-		string $mergedAt,
-		string $expectedMergeDate
-	): void {
-		$pullRequest = new PullRequest($title, $author, $url, new \DateTime($mergedAt));
+	/** @test @dataProvider getPullRequestQuantity */
+	public function whenParseObjectAsJson_shouldReturnAllObjectProperties(int $pullRequestTotalCount): void {
+		$pullRequest = new PullRequest($pullRequestTotalCount);
 
 		$serializedObject = $pullRequest->jsonSerialize();
 
 		Assert::assertEquals([
-			'title' => $title,
-			'author' => $author,
-			'url' => $url,
-			'mergedAt' => $expectedMergeDate,
+			'totalCount' => $pullRequestTotalCount,
 		], $serializedObject);
 	}
 }

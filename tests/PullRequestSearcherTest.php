@@ -25,8 +25,8 @@ class PullRequestSearcherTest extends TestCase {
 		$pullRequestList = $pullRequestSearcher->search();
 
 		$expectedPullRequestList = [
-			new PullRequest('Fake', 'Fake', 'Fake', new \DateTime('2019-10-12 21:35:32')),
-			new PullRequest('Fake', 'Fake', 'Fake', new \DateTime('2019-10-12 21:35:32')),
+			new PullRequest(2),
+			new PullRequest(2),
 		];
 		Assert::assertEquals($expectedPullRequestList, $pullRequestList);
 	}

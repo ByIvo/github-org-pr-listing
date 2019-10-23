@@ -34,8 +34,9 @@ class PullRequestSearcher {
 
 		$pullRequestList = [];
 
-		for ($i=0; $i < $parsedResponse->total_count; $i++) {
-			$brandNewFakePullRequest = new PullRequest('Fake', 'Fake', 'Fake', new \DateTime('2019-10-12 21:35:32'));
+		$totalCount = $parsedResponse->total_count;
+		for ($i=0; $i < $totalCount; $i++) {
+			$brandNewFakePullRequest = new PullRequest($totalCount);
 			$pullRequestList[] = $brandNewFakePullRequest;
 		}
 
