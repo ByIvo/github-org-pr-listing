@@ -29,7 +29,7 @@ class PullRequestSearcherTest extends TestCase {
 	}
 
 	/** @test */
-	public function whenRequestAPullRequestList_shouldFilterOnlyClosedPullRequests(): void {
+	public function whenRequestAPullRequestSearch_shouldFilterOnlyClosedPullRequests(): void {
 		$requestHistoryWithMutableReference = [];
 		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
 
@@ -42,7 +42,7 @@ class PullRequestSearcherTest extends TestCase {
 	}
 
 	/** @test */
-	public function whenRequestAPullRequestList_shouldFilterOrganizationProvidedAsEnvironmentVariable(): void {
+	public function whenRequestAPullRequestSearch_shouldFilterOrganizationProvidedAsEnvironmentVariable(): void {
 		$requestHistoryWithMutableReference = [];
 		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
 		putenv("PR_LISTING_GITHUB_ORG=desired-company");
@@ -55,7 +55,7 @@ class PullRequestSearcherTest extends TestCase {
 	}
 
 	/** @test */
-	public function whenRequestAPullRequestList_shouldFilterAuthorProvidedAsEnvironmentVariable(): void {
+	public function whenRequestAPullRequestSearch_shouldFilterAuthorProvidedAsEnvironmentVariable(): void {
 		$requestHistoryWithMutableReference = [];
 		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
 		putenv("PR_LISTING_AUTHOR=byivo");
@@ -68,7 +68,7 @@ class PullRequestSearcherTest extends TestCase {
 	}
 
 	/** @test */
-	public function givenMultipleAuthors_whenRequestAPullRequestList_shouldAddAllAuthorsInFilterParameters(): void {
+	public function givenMultipleAuthors_whenRequestAPullRequestSearch_shouldAddAllAuthorsInFilterParameters(): void {
 		$requestHistoryWithMutableReference = [];
 		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
 		putenv("PR_LISTING_AUTHOR=byivo jhmachado deenison");
@@ -83,7 +83,7 @@ class PullRequestSearcherTest extends TestCase {
 	}
 
 	/** @test */
-	public function whenRequestAPullRequestList_shouldFilterMergedDateProvidedAsEnvironmentVariable(): void {
+	public function whenRequestAPullRequestSearch_shouldFilterMergedDateProvidedAsEnvironmentVariable(): void {
 		$requestHistoryWithMutableReference = [];
 		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
 		putenv("PR_LISTING_MERGE_INTERVAL=2019-07-01..2019-09-30");
@@ -96,7 +96,7 @@ class PullRequestSearcherTest extends TestCase {
 	}
 
 	/** @test */
-	public function givenAllEnvironmentVariables_whenRequestAPullRequestList_shouldAddQueryParameterWithAllFilters(): void {
+	public function givenAllEnvironmentVariables_whenRequestAPullRequestSearch_shouldAddQueryParameterWithAllFilters(): void {
 		$requestHistoryWithMutableReference = [];
 		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
 		putenv("PR_LISTING_GITHUB_ORG=great_org");
@@ -114,7 +114,7 @@ class PullRequestSearcherTest extends TestCase {
 	}
 
 	/** @test */
-	public function givenAnEnvironmentCredentials_whenRequestAPullRequestList_shouldCreateBasicAuthenticationInRequestHeader(): void {
+	public function givenAnEnvironmentCredentials_whenRequestAPullRequestSearch_shouldCreateBasicAuthenticationInRequestHeader(): void {
 		$requestHistoryWithMutableReference = [];
 		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
 		putenv("PR_LISTING_BASIC_AUTH_CREDENTIALS=username:auth_token");
@@ -128,7 +128,7 @@ class PullRequestSearcherTest extends TestCase {
 	}
 
 	/** @test */
-	public function whenRequestAPullRequestList_shouldUseCorrectlyGithubUri(): void {
+	public function whenRequestAPullRequestSearch_shouldUseCorrectlyGithubUri(): void {
 		$requestHistoryWithMutableReference = [];
 		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
 
