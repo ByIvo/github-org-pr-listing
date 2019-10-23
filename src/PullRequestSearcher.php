@@ -13,7 +13,7 @@ class PullRequestSearcher {
 		$this->client = $client;
 	}
 
-	public function search(): array {
+	public function search(): RangePullRequestInfo {
 		$githubOrganization = getenv('PR_LISTING_GITHUB_ORG');
 		$mergeInterval = getenv('PR_LISTING_MERGE_INTERVAL');
 		$githubCredentials = getenv('PR_LISTING_BASIC_AUTH_CREDENTIALS');
@@ -32,14 +32,8 @@ class PullRequestSearcher {
 
 		$parsedResponse = json_decode($rawBodyResponse);
 
-		$pullRequestList = [];
-
 		$totalCount = $parsedResponse->total_count;
-		for ($i=0; $i < $totalCount; $i++) {
-			$brandNewFakePullRequest = new PullRequest($totalCount);
-			$pullRequestList[] = $brandNewFakePullRequest;
-		}
 
-		return $pullRequestList;
+		return new RangePullRequestInfo($totalCount);
 	}
 }

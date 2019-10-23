@@ -2,7 +2,7 @@
 
 namespace GithubPrListing;
 
-class PullRequest implements \JsonSerializable {
+class RangePullRequestInfo implements \JsonSerializable {
 
 	/** @var int */
 	private $pullRequestTotalCount;

@@ -2,7 +2,7 @@
 
 namespace Test\GithubPrListing;
 
-use GithubPrListing\PullRequest;
+use GithubPrListing\RangePullRequestInfo;
 use GithubPrListing\PullRequestSearcher;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
 class PullRequestSearcherTest extends TestCase {
 
 	/** @test */
-	public function givenAGithubPullRequestListResponse_whenListingPullRequest_shouldReturnRelevantProperties(): void {
+	public function givenAGithubPullRequestResponse_whenListingPullRequest_shouldCreateAPullRequestInfoWithTotalCount(): void {
 		$body = $this->getMockedResponseWithTotalAmount(2);
 		$expectedGithubResponse = new Response($status = 200, $headers = [], $body);
 		$client = $this->createClientWithMockedResponses([$expectedGithubResponse]);
@@ -24,11 +24,8 @@ class PullRequestSearcherTest extends TestCase {
 		$pullRequestSearcher = new PullRequestSearcher($client);
 		$pullRequestList = $pullRequestSearcher->search();
 
-		$expectedPullRequestList = [
-			new PullRequest(2),
-			new PullRequest(2),
-		];
-		Assert::assertEquals($expectedPullRequestList, $pullRequestList);
+		$expectedPullRequestResponse = new RangePullRequestInfo(2);
+		Assert::assertEquals($expectedPullRequestResponse, $pullRequestList);
 	}
 
 	/** @test */

@@ -2,11 +2,11 @@
 
 namespace Test\GithubPrListing;
 
-use GithubPrListing\PullRequest;
+use GithubPrListing\RangePullRequestInfo;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 
-class PullRequestTest extends TestCase {
+class RangePullRequestInfoTest extends TestCase {
 
 	public function getPullRequestQuantity(): array {
 		return [
@@ -18,7 +18,7 @@ class PullRequestTest extends TestCase {
 
 	/** @test @dataProvider getPullRequestQuantity */
 	public function whenParseObjectAsJson_shouldReturnAllObjectProperties(int $pullRequestTotalCount): void {
-		$pullRequest = new PullRequest($pullRequestTotalCount);
+		$pullRequest = new RangePullRequestInfo($pullRequestTotalCount);
 
 		$serializedObject = $pullRequest->jsonSerialize();
 
