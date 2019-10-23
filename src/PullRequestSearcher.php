@@ -33,13 +33,10 @@ class PullRequestSearcher {
 		$parsedResponse = json_decode($rawBodyResponse);
 
 		$pullRequestList = [];
-		foreach ($parsedResponse->items as $pullRequest) {
-			$title = $pullRequest->title;
-			$author = $pullRequest->user->login;
-			$url = $pullRequest->html_url;
-			$closedAt = new \DateTime($pullRequest->closed_at);
 
-			$pullRequestList[] = new PullRequest($title, $author, $url, $closedAt);
+		for ($i=0; $i < $parsedResponse->total_count; $i++) {
+			$brandNewFakePullRequest = new PullRequest('Fake', 'Fake', 'Fake', new \DateTime('2019-10-12 21:35:32'));
+			$pullRequestList[] = $brandNewFakePullRequest;
 		}
 
 		return $pullRequestList;

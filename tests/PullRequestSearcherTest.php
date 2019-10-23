@@ -17,19 +17,16 @@ class PullRequestSearcherTest extends TestCase {
 
 	/** @test */
 	public function givenAGithubPullRequestListResponse_whenListingPullRequest_shouldReturnRelevantProperties(): void {
-		$body = $this->getMockedGithubPullRequestListResponse([
-			['title' => 'PR 01', 'author' => 'ByIvo 1', 'url' => 'url 01', 'closedAt' => '2019-10-12T21:35:32Z'],
-			['title' => 'PR 02', 'author' => 'ByIvo 2', 'url' => 'url 02', 'closedAt' => '2019-10-15T13:13:13Z'],
-		]);
+		$body = $this->getMockedResponseWithTotalAmount(2);
 		$expectedGithubResponse = new Response($status = 200, $headers = [], $body);
-		$client = $this->createClientWithMockedResponse($expectedGithubResponse);
+		$client = $this->createClientWithMockedResponses([$expectedGithubResponse]);
 
 		$pullRequestSearcher = new PullRequestSearcher($client);
 		$pullRequestList = $pullRequestSearcher->search();
 
 		$expectedPullRequestList = [
-			new PullRequest('PR 01', 'ByIvo 1', 'url 01', new \DateTime('2019-10-12 21:35:32')),
-			new PullRequest('PR 02', 'ByIvo 2', 'url 02', new \DateTime('2019-10-15 13:13:13')),
+			new PullRequest('Fake', 'Fake', 'Fake', new \DateTime('2019-10-12 21:35:32')),
+			new PullRequest('Fake', 'Fake', 'Fake', new \DateTime('2019-10-12 21:35:32')),
 		];
 		Assert::assertEquals($expectedPullRequestList, $pullRequestList);
 	}
@@ -146,9 +143,9 @@ class PullRequestSearcherTest extends TestCase {
 	}
 
 	private function fillRequestHistoryAndCreateClientWithEmptyMockedResponses(array &$requestHistoryWithMutableReference): Client {
-		$emptyResponse = $this->getMockedGithubPullRequestListResponse([]);
+		$emptyResponse = $this->getMockedResponseWithTotalAmount(1);
 		$expectedGithubResponse = new Response($status = 200, $headers = [], $emptyResponse);
-		return  $this->createClientWithMockedResponse($expectedGithubResponse, $requestHistoryWithMutableReference);
+		return $this->createClientWithMockedResponses([$expectedGithubResponse], $requestHistoryWithMutableReference);
 	}
 
 	private function extractFilterParametersFromFirstRequest(array $requestHistoryWithMutableReference): string {
@@ -171,45 +168,16 @@ class PullRequestSearcherTest extends TestCase {
 		return $requestHistoryWithMutableReference[0]['request'];
 	}
 
-	private function getMockedGithubPullRequestListResponse(array $mockedPullRequests): string {
-		$pullRequestsCount = count($mockedPullRequests);
-
-		$parsedPullRequestItems = array_map(function (array $mockedPullRequestData) {
-			return self::parsePullRequestDataIntoJsonResponseItem($mockedPullRequestData);
-		}, $mockedPullRequests);
-
-		$mockedJsonPullRequests = implode(',', $parsedPullRequestItems);
-
+	private function getMockedResponseWithTotalAmount(int $totalPullRequestCount): string {
 		return <<<JSON
 {
-    "total_count": {$pullRequestsCount},
-    "items": [
-        {$mockedJsonPullRequests}
-    ]
+    "total_count": {$totalPullRequestCount}
 }
 JSON;
 	}
 
-	private static function parsePullRequestDataIntoJsonResponseItem(array $mockedPullRequestData): string {
-		return <<<JSON
-{
-    "html_url": "{$mockedPullRequestData['url']}",
-    "title": "{$mockedPullRequestData['title']}",
-    "user": {
-        "login": "{$mockedPullRequestData['author']}"
-    },
-    "state": "closed",
-    "created_at": "2019-07-01T21:35:32Z",
-    "closed_at": "{$mockedPullRequestData['closedAt']}"
-}
-JSON;
-
-	}
-
-	private function createClientWithMockedResponse(Response $expectedGithubResponse, &$requestHistoryWithMutableReference = []): Client {
-		$mocks = new MockHandler([
-			$expectedGithubResponse
-		]);
+	private function createClientWithMockedResponses(array $expectedGithubResponses, &$requestHistoryWithMutableReference = []): Client {
+		$mocks = new MockHandler($expectedGithubResponses);
 
 		$handler = HandlerStack::create($mocks);
 
