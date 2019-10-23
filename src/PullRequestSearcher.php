@@ -22,19 +22,16 @@ class PullRequestSearcher {
 
 		$totalCount = 0;
 		foreach ($authors as $authorUsername) {
-			$response = $this->client->get('https://api.github.com/search/issues', [
-				'query' => [
-					'q' => "type:pr is:closed org:{$githubOrganization} author:{$authorUsername} merged:{$mergeInterval}"
-				],
-				'headers' => [
-					'Authorization' => 'Basic ' . base64_encode($githubCredentials),
-				],
-			]);
+			$pullRequestApiRequest = new PullRequestApiRequest($githubCredentials, $githubOrganization, $mergeInterval);
+			$authorPRRequest = $pullRequestApiRequest->createRequestWithPRInfoOfAuthor($authorUsername);
+			$response = $this->client->send($authorPRRequest, $options = []);
 			$rawBodyResponse = strval($response->getBody());
 
 			$parsedResponse = json_decode($rawBodyResponse);
 
-			$totalCount += $parsedResponse->total_count;
+			$authorRangePRInfo = new RangePullRequestInfo($parsedResponse->total_count);
+
+			$totalCount += $authorRangePRInfo->getPullRequestTotalCount();
 		}
 
 		return new RangePullRequestInfo($totalCount);
