@@ -30,7 +30,7 @@ class PullRequestSearcher {
 			$parsedResponse = json_decode($rawBodyResponse);
 
 			$authorPullRequestTotalCount = $parsedResponse->total_count;
-			$rangePullRequestInfo->addAuthorPullRequestInfo($authorPullRequestTotalCount);
+			$rangePullRequestInfo->addAuthorPullRequestInfo($authorUsername, $authorPullRequestTotalCount);
 		}
 
 		return $rangePullRequestInfo;

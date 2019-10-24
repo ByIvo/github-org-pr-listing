@@ -20,11 +20,14 @@ class RangePullRequestInfoTest extends TestCase {
 	public function whenParseObjectAsJson_shouldReturnAllObjectProperties(int $pullRequestTotalCount): void {
 		$pullRequest = new RangePullRequestInfo();
 
-		$pullRequest->addAuthorPullRequestInfo($pullRequestTotalCount);
+		$pullRequest->addAuthorPullRequestInfo('githubUsername', $pullRequestTotalCount);
 
 		$serializedObject = $pullRequest->jsonSerialize();
 		Assert::assertEquals([
 			'totalCount' => $pullRequestTotalCount,
+			'authorTotalCount' => [
+				'githubUsername' => $pullRequestTotalCount
+			],
 		], $serializedObject);
 	}
 
@@ -32,9 +35,9 @@ class RangePullRequestInfoTest extends TestCase {
 	public function givenMultipleAuthorPRInfo_whenParseObjectAsJson_shouldSumAllAuthorTotalCount(): void {
 		$pullRequest = new RangePullRequestInfo();
 
-		$pullRequest->addAuthorPullRequestInfo(2);
-		$pullRequest->addAuthorPullRequestInfo(3);
-		$pullRequest->addAuthorPullRequestInfo(7);
+		$pullRequest->addAuthorPullRequestInfo('username1', 2);
+		$pullRequest->addAuthorPullRequestInfo('username2', 3);
+		$pullRequest->addAuthorPullRequestInfo('username3', 7);
 
 		Assert::assertEquals(12, $pullRequest->getPullRequestTotalCount());
 	}

@@ -26,6 +26,7 @@ class PullRequestSearcherTest extends TestCase {
 
 	/** @test */
 	public function givenAGithubPullRequestResponse_whenListingPullRequest_shouldCreateAPullRequestInfoWithTotalCount(): void {
+		$this->setEnv("PR_LISTING_AUTHOR","authorUsername");
 		$expectedGithubResponse = $this->getStatusOkResponseWithTotalCountPullRequest(2);
 		$client = $this->createClientWithMockedResponses([$expectedGithubResponse]);
 
@@ -33,7 +34,7 @@ class PullRequestSearcherTest extends TestCase {
 		$pullRequestList = $pullRequestSearcher->search();
 
 		$expectedPullRequestResponse = new RangePullRequestInfo();
-		$expectedPullRequestResponse->addAuthorPullRequestInfo(2);
+		$expectedPullRequestResponse->addAuthorPullRequestInfo('authorUsername', 2);
 		Assert::assertEquals($expectedPullRequestResponse, $pullRequestList);
 	}
 
