@@ -32,7 +32,8 @@ class PullRequestSearcherTest extends TestCase {
 		$pullRequestSearcher = new PullRequestSearcher($client);
 		$pullRequestList = $pullRequestSearcher->search();
 
-		$expectedPullRequestResponse = new RangePullRequestInfo(2);
+		$expectedPullRequestResponse = new RangePullRequestInfo();
+		$expectedPullRequestResponse->addAuthorPullRequestInfo(2);
 		Assert::assertEquals($expectedPullRequestResponse, $pullRequestList);
 	}
 

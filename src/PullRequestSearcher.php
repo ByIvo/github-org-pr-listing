@@ -20,7 +20,7 @@ class PullRequestSearcher {
 		$pullRequestAuthors = getenv('PR_LISTING_AUTHOR');
 		$authors = mb_split(' ', $pullRequestAuthors);
 
-		$totalCount = 0;
+		$rangePullRequestInfo = new RangePullRequestInfo();
 		foreach ($authors as $authorUsername) {
 			$pullRequestApiRequest = new PullRequestApiRequest($githubCredentials, $githubOrganization, $mergeInterval);
 			$authorPRRequest = $pullRequestApiRequest->createRequestWithPRInfoOfAuthor($authorUsername);
@@ -29,11 +29,10 @@ class PullRequestSearcher {
 
 			$parsedResponse = json_decode($rawBodyResponse);
 
-			$authorRangePRInfo = new RangePullRequestInfo($parsedResponse->total_count);
-
-			$totalCount += $authorRangePRInfo->getPullRequestTotalCount();
+			$authorPullRequestTotalCount = $parsedResponse->total_count;
+			$rangePullRequestInfo->addAuthorPullRequestInfo($authorPullRequestTotalCount);
 		}
 
-		return new RangePullRequestInfo($totalCount);
+		return $rangePullRequestInfo;
 	}
 }

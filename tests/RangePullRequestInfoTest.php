@@ -18,12 +18,24 @@ class RangePullRequestInfoTest extends TestCase {
 
 	/** @test @dataProvider getPullRequestQuantity */
 	public function whenParseObjectAsJson_shouldReturnAllObjectProperties(int $pullRequestTotalCount): void {
-		$pullRequest = new RangePullRequestInfo($pullRequestTotalCount);
+		$pullRequest = new RangePullRequestInfo();
+
+		$pullRequest->addAuthorPullRequestInfo($pullRequestTotalCount);
 
 		$serializedObject = $pullRequest->jsonSerialize();
-
 		Assert::assertEquals([
 			'totalCount' => $pullRequestTotalCount,
 		], $serializedObject);
+	}
+
+	/** @test */
+	public function givenMultipleAuthorPRInfo_whenParseObjectAsJson_shouldSumAllAuthorTotalCount(): void {
+		$pullRequest = new RangePullRequestInfo();
+
+		$pullRequest->addAuthorPullRequestInfo(2);
+		$pullRequest->addAuthorPullRequestInfo(3);
+		$pullRequest->addAuthorPullRequestInfo(7);
+
+		Assert::assertEquals(12, $pullRequest->getPullRequestTotalCount());
 	}
 }
