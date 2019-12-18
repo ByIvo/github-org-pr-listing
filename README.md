@@ -13,7 +13,8 @@ You have to check the *repo* role, that will provide _Full control of private re
 ## Running in development mode
 
 Create your docker-composer.override.yml and setup the required environment variables (you can find them in docker-composer.yml).
-Ex:
+
+Example:
 ```yml
 version: '3'
 services:
@@ -24,6 +25,9 @@ services:
       - PR_LISTING_MERGE_INTERVAL=2019-10-01..2019-12-31
       - PR_LISTING_BASIC_AUTH_CREDENTIALS=user:token
 ```
+
+Then simply run `docker-compose up`
+
 ### Required env variables
 
 * PR_LISTING_GITHUB_ORG: Should be valued as github organization name (the one you find in url)
