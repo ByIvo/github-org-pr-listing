@@ -1,0 +1,10 @@
+.git
+tests/*
+Dockerfile
+Jenkinsfile
+LICENSE
+phpunit.xml
+composer.json
+composer.lock
+.gitignore
+docker-compose.*
