@@ -1,7 +1,7 @@
 # github-org-pr-listing
 List all closed pull requests from a given Github Organization and users(authors).
 
-* Important:* It'll only count closed and merged Pull Requests.
+**Important:** It'll only count closed and merged Pull Requests.
 
 # Running
 
@@ -38,4 +38,4 @@ Then simply run `docker-compose up`
 ## Running in production mode
 
 Currently, the Dockerfile is running the embedded php server, what is'nt recommended to production. 
-But if you know what you're doing, you can build the image using `docker build -t image_name .` and then run it as a container (don't forget to export the port 9000 and also set up the env variables
+But if you know what you're doing, you can build the image using `docker build -t image_name .` and then run it as a container (don't forget to export the port 9000 and also set up the env variables).
