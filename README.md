@@ -1,7 +1,7 @@
 # github-org-pr-listing
-List all closed pull requests from a given Github Organization and users(authors).
+List all closed pull requests from a given Github Organization and users(authors/commenter).
 
-**Important:** It'll only count closed and merged Pull Requests.
+**Important:** It'll only count closed and merged in Pull Requests list
 
 # Running
 
@@ -22,7 +22,6 @@ services:
     environment:
       - PR_LISTING_GITHUB_ORG=organization
       - PR_LISTING_AUTHOR=author1 author2
-      - PR_LISTING_MERGE_INTERVAL=2019-10-01..2019-12-31
       - PR_LISTING_BASIC_AUTH_CREDENTIALS=user:token
 ```
 
@@ -32,7 +31,6 @@ Then simply run `docker-compose up`
 
 * PR_LISTING_GITHUB_ORG: Should be valued as github organization name (the one you find in url)
 * PR_LISTING_AUTHOR: Splitted by spaces, you can provide as many github authors as you want
-* PR_LISTING_MERGE_INTERVAL: The merge interval, should be in format yyyy-MM-dd..yyyy-MM-dd
 * PR_LISTING_BASIC_AUTH_CREDENTIALS: Take your github token access along with your username. The value should be username:token
 
 ## Running in production mode
