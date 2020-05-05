@@ -3,7 +3,6 @@
 namespace Test\GithubPrListing;
 
 use GithubPrListing\PullRequestApiRequest;
-use GithubPrListing\PullRequestSearcher;
 use GuzzleHttp\Psr7\Request;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
@@ -82,6 +81,50 @@ class PullRequestApiRequestTest extends TestCase {
 	public function whenCreateAPRListInfoApiRequest_shouldUseGetMethod(): void {
 		$pullRequestApiRequest = new PullRequestApiRequest($githubCredentials = '', $githubOrganization = '', $mergeInterval = '');
 		$request = $pullRequestApiRequest->createRequestWithPRInfoOfAuthor($authorUsername = '');
+
+		$method = $request->getMethod();
+		Assert::assertStringStartsWith('GET', $method);
+	}
+
+	/** @test */
+	public function whenCreatingACodeReviewRequest_shouldAddQueryParameterWithAllFilters(): void {
+		$pullRequestApiRequest = new PullRequestApiRequest($githubCredentials = 'credential', $githubOrganization = 'great_org', $createdInterval = '2019-10-01..2019-12-31');
+
+		$request = $pullRequestApiRequest->createCodeReviewRequest($commenter = 'byivo');
+
+		$allRequestQueryParameters = $this->extractAllQueryParametersFromRequest($request);
+		Assert::assertEquals(
+			'type:pr org:great_org commenter:byivo created:2019-10-01..2019-12-31',
+			$allRequestQueryParameters['q']
+		);
+	}
+
+	/** @test */
+	public function whenCreatingACodeReviewRequest_shouldCreateBasicAuthenticationInRequestHeader(): void {
+		$pullRequestApiRequest = new PullRequestApiRequest($githubCredentials = 'username:auth_token', $githubOrganization = '', $mergeInterval = '');
+
+		$request = $pullRequestApiRequest->createCodeReviewRequest($commenter = 'byivo');
+
+		$firstRequestAuthorizationHeader =	$request->getHeaderLine('Authorization');
+		$expectedBasicAuth = 'Basic ' . base64_encode('username:auth_token');
+		Assert::assertEquals($expectedBasicAuth, $firstRequestAuthorizationHeader);
+	}
+
+	/** @test */
+	public function whenCreatingACodeReviewRequest_shouldUseCorrectlyGithubUri(): void {
+		$pullRequestApiRequest = new PullRequestApiRequest($githubCredentials = '', $githubOrganization = '', $mergeInterval = '');
+
+		$request = $pullRequestApiRequest->createCodeReviewRequest($commenter = '');
+
+		$uri = $request->getUri();
+		Assert::assertStringStartsWith('https://api.github.com/search/issues', strval($uri));
+	}
+
+	/** @test */
+	public function whenCreatingACodeReviewRequest_shouldUseGetMethod(): void {
+		$pullRequestApiRequest = new PullRequestApiRequest($githubCredentials = '', $githubOrganization = '', $mergeInterval = '');
+
+		$request = $pullRequestApiRequest->createCodeReviewRequest($commenter = '');
 
 		$method = $request->getMethod();
 		Assert::assertStringStartsWith('GET', $method);

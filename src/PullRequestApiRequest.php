@@ -4,7 +4,6 @@ namespace GithubPrListing;
 
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Uri;
-use Psr\Http\Message\UriInterface;
 
 class PullRequestApiRequest {
 
@@ -22,21 +21,31 @@ class PullRequestApiRequest {
 	}
 
 	public function createRequestWithPRInfoOfAuthor(string $authorUsername): Request {
-		$uri = $this->createUriWithAllFiltersAndAuthToAuthorUsername($authorUsername);
+		$pullRequestFilters = <<<FILTER
+type:pr is:closed org:{$this->githubOrganization} author:{$authorUsername} merged:{$this->mergeInterval}
+FILTER;
+
+		return $this->createRequestWithFilters($pullRequestFilters);
+	}
+
+	public function createCodeReviewRequest(string $authorUsername): Request {
+		$pullRequestFilters = <<<FILTER
+type:pr org:{$this->githubOrganization} commenter:{$authorUsername} created:{$this->mergeInterval}
+FILTER;
+
+		return $this->createRequestWithFilters($pullRequestFilters);
+	}
+
+	private function createRequestWithFilters(string $filters): Request {
+		$uri = new Uri('https://api.github.com/search/issues');
+		$uriWithFilters = Uri::withQueryValue($uri, 'q', $filters);
 
 		return new Request(
 			$method = 'GET',
-			$uri,
+			$uriWithFilters,
 			$headers = [
 				'Authorization' => 'Basic ' . base64_encode($this->githubCredentials)
 			]
 		);
-	}
-
-	private function createUriWithAllFiltersAndAuthToAuthorUsername(string $authorUsername): UriInterface {
-		$uri = new Uri('https://api.github.com/search/issues');
-
-		$pullRequestFilters = "type:pr is:closed org:{$this->githubOrganization} author:{$authorUsername} merged:{$this->mergeInterval}";
-		return Uri::withQueryValue($uri, 'q', $pullRequestFilters);
 	}
 }
