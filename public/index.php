@@ -43,4 +43,16 @@ $app->get('/listCodeReviews', function (Request $request, Response $response, $a
 		->withStatus(200);
 });
 
+$app->get('/graphics', function (Request $request, Response $response, $args) {
+	$file = './graphics.html';
+
+	$streamFactory = new \Slim\Psr7\Factory\StreamFactory();
+
+	if (file_exists($file)) {
+		return $response->withBody($streamFactory->createStreamFromFile($file));
+	} else {
+		throw new \Slim\Exception\NotFoundException($request, $response);
+	}
+});
+
 $app->run();
