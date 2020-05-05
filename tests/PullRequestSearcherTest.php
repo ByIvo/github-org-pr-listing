@@ -84,6 +84,55 @@ class PullRequestSearcherTest extends TestCase {
 		Assert::assertStringStartsWith('https://api.github.com/search/issues', strval($uri));
 	}
 
+	/** @test */
+	public function givenAGithubCodeReviewResponse_shouldCreateACodeReviewInfoWithTotalCount(): void {
+		$this->setEnv("PR_LISTING_AUTHOR","commenterUsername");
+		$expectedGithubResponse = $this->getStatusOkResponseWithTotalCountPullRequest(2);
+		$client = $this->createClientWithMockedResponses([$expectedGithubResponse]);
+
+		$codeReviewSearcher = new PullRequestSearcher($client);
+		$codeReviewList = $codeReviewSearcher->searchCodeReview(new \DateTime(), new \DateTime());
+
+		$expectedPullRequestResponse = new RangePullRequestInfo();
+		$expectedPullRequestResponse->addAuthorPullRequestInfo('commenterUsername', 2);
+		Assert::assertEquals($expectedPullRequestResponse, $codeReviewList);
+	}
+
+	/** @test */
+	public function givenAGithubCodeReviewResponse_shouldRequestATotalCountPullRequestEach(): void {
+		$this->setEnv("PR_LISTING_AUTHOR","byivo caju juca");
+		$firstAuthorExpectedGithubResponse = $this->getStatusOkResponseWithTotalCountPullRequest(1);
+		$secondExpectedGithubResponse = $this->getStatusOkResponseWithTotalCountPullRequest(2);
+		$lastExpectedGithubResponse = $this->getStatusOkResponseWithTotalCountPullRequest(4);
+		$expectedGithubResponses = [
+			$firstAuthorExpectedGithubResponse,
+			$secondExpectedGithubResponse,
+			$lastExpectedGithubResponse
+		];
+		$requestHistoryWithMutableReference = [];
+		$client = $this->createClientWithMockedResponses($expectedGithubResponses, $requestHistoryWithMutableReference);
+
+		$codeReviewSearcher = new PullRequestSearcher($client);
+		$codeReviewList = $codeReviewSearcher->searchCodeReview(new \DateTime(), new \DateTime());
+
+		Assert::assertEquals(7, $codeReviewList->getPullRequestTotalCount());
+		Assert::assertEquals(3, sizeof($requestHistoryWithMutableReference));
+	}
+
+	/** @test */
+	public function givenAGithubCodeReviewResponse_shouldNotCountPRWhichCommenterIsTheSameAsAuthor(): void {
+		$this->setEnv("PR_LISTING_AUTHOR","commenterUsername");
+		$expectedGithubResponse = $this->createTwoCodeReviewsWhereOneOfThemTheCommenterIsTheSameAsTheAuthor("commenterUsername");
+		$client = $this->createClientWithMockedResponses([$expectedGithubResponse]);
+
+		$codeReviewSearcher = new PullRequestSearcher($client);
+		$codeReviewList = $codeReviewSearcher->searchCodeReview(new \DateTime(), new \DateTime());
+
+		$expectedPullRequestResponse = new RangePullRequestInfo();
+		$expectedPullRequestResponse->addAuthorPullRequestInfo('commenterUsername', 1);
+		Assert::assertEquals($expectedPullRequestResponse, $codeReviewList);
+	}
+
 	private function fillRequestHistoryAndCreateClientWithEmptyMockedResponses(array &$requestHistoryWithMutableReference): Client {
 		$emptyResponse = $this->getMockedResponseWithTotalAmount(1);
 		$expectedGithubResponse = new Response($status = 200, $headers = [], $emptyResponse);
@@ -114,6 +163,27 @@ class PullRequestSearcherTest extends TestCase {
     "total_count": {$totalPullRequestCount}
 }
 JSON;
+	}
+
+	private function createTwoCodeReviewsWhereOneOfThemTheCommenterIsTheSameAsTheAuthor(string $commenter): Response {
+		$body = <<<JSON
+{
+    "total_count": 2,
+    "items": [
+      {
+        "user": {
+          "login": "someoneelse"
+        }
+      },
+      {
+        "user": {
+          "login": "$commenter"
+        }
+      }
+    ]
+}
+JSON;
+		return new Response($status = 200, $headers = [], $body);
 	}
 
 	private function createClientWithMockedResponses(array $expectedGithubResponses, &$requestHistoryWithMutableReference = []): Client {
