@@ -31,7 +31,7 @@ class PullRequestSearcherTest extends TestCase {
 		$client = $this->createClientWithMockedResponses([$expectedGithubResponse]);
 
 		$pullRequestSearcher = new PullRequestSearcher($client);
-		$pullRequestList = $pullRequestSearcher->search();
+		$pullRequestList = $pullRequestSearcher->search(new \DateTime(), new \DateTime());
 
 		$expectedPullRequestResponse = new RangePullRequestInfo();
 		$expectedPullRequestResponse->addAuthorPullRequestInfo('authorUsername', 2);
@@ -53,7 +53,7 @@ class PullRequestSearcherTest extends TestCase {
 		$client = $this->createClientWithMockedResponses($expectedGithubResponses, $requestHistoryWithMutableReference);
 
 		$pullRequestSearcher = new PullRequestSearcher($client);
-		$rangePullRequestInfo = $pullRequestSearcher->search();
+		$rangePullRequestInfo = $pullRequestSearcher->search(new \DateTime(), new \DateTime());
 
 		Assert::assertEquals(7, $rangePullRequestInfo->getPullRequestTotalCount());
 		Assert::assertEquals(3, sizeof($requestHistoryWithMutableReference));
@@ -65,11 +65,10 @@ class PullRequestSearcherTest extends TestCase {
 		$client = $this->fillRequestHistoryAndCreateClientWithEmptyMockedResponses($requestHistoryWithMutableReference);
 		$this->setEnv("PR_LISTING_GITHUB_ORG","great_org");
 		$this->setEnv("PR_LISTING_AUTHOR","author1");
-		$this->setEnv("PR_LISTING_MERGE_INTERVAL","2019-10-01..2019-12-31");
 		$this->setEnv("PR_LISTING_BASIC_AUTH_CREDENTIALS","username:auth_token");
 
 		$pullRequestSearcher = new PullRequestSearcher($client);
-		$pullRequestSearcher->search();
+		$pullRequestSearcher->search(new \DateTime('2019-10-01'), new \DateTime('2019-12-31'));
 
 		$firstRequest = $this->extractFirstRequest($requestHistoryWithMutableReference);
 		$authorizationHeader =	$firstRequest->getHeaderLine('Authorization');

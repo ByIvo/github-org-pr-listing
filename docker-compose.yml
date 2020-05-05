@@ -9,5 +9,4 @@ services:
     environment:
       - PR_LISTING_GITHUB_ORG=great_org
       - PR_LISTING_AUTHOR=author1 author2
-      - PR_LISTING_MERGE_INTERVAL=2019-07-01..2019-09-30
       - PR_LISTING_BASIC_AUTH_CREDENTIALS=username:token_auth

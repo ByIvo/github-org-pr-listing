@@ -13,12 +13,13 @@ class PullRequestSearcher {
 		$this->client = $client;
 	}
 
-	public function search(): RangePullRequestInfo {
+	public function search(\DateTime $start, \DateTime $end): RangePullRequestInfo {
 		$githubOrganization = getenv('PR_LISTING_GITHUB_ORG');
-		$mergeInterval = getenv('PR_LISTING_MERGE_INTERVAL');
 		$githubCredentials = getenv('PR_LISTING_BASIC_AUTH_CREDENTIALS');
 		$pullRequestAuthors = getenv('PR_LISTING_AUTHOR');
 		$authors = mb_split(' ', $pullRequestAuthors);
+
+		$mergeInterval = $this->createIntervalFilter($start, $end);
 
 		$rangePullRequestInfo = new RangePullRequestInfo();
 		foreach ($authors as $authorUsername) {
