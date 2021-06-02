@@ -27,6 +27,8 @@ services:
 
 Then simply run `docker-compose up`
 
+Then access: http://localhost:9000/graphics?start=2021-04-12&end=2021-04-16
+
 ### Required env variables
 
 * PR_LISTING_GITHUB_ORG: Should be valued as github organization name (the one you find in url)
